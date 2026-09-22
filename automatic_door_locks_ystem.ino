@@ -60,6 +60,30 @@ after 5 seconds it locks itself again automatically.
    the system flashes green briefly to say "I'm listening again."
 */
 
+/*
+  =====================================================
+   AUTOMATIC DOOR LOCK SYSTEM (with I2C LCD + Lockout)
+   Components: Arduino Uno, 4x4 Matrix Keypad,
+               SG90 Servo Motor, Red LED, Green LED,
+               Buzzer, Push Button (Exit Switch),
+               16x2 I2C LCD Display
+
+   FEATURES:
+   - Password typed on keypad, masked as '*' on LCD
+   - 3 wrong password attempts -> system locks out
+     for 40 seconds
+   - During lockout: RED LED glows, keypad ignored
+   - When lockout timer finishes (resets): GREEN LED
+     glows to show system is ready again
+
+   Libraries required (Install via Library Manager):
+   1. Keypad by Mark Stanley, Alexander Brevig
+   2. LiquidCrystal I2C by Frank de Brabander
+   3. Servo (comes pre-installed with Arduino IDE)
+   4. Wire (comes pre-installed with Arduino IDE)
+  =====================================================
+*/
+
 #include <Keypad.h>
 #include <Servo.h>
 #include <Wire.h>
@@ -161,11 +185,16 @@ void loop() {
     else {
       inputCode += key;
       Serial.print("Current Input: ");
-      Serial.println(inputCode);
+      Serial.println(inputCode);   // Serial Monitor still shows real digits (for teaching/debug)
 
+      // ---- Mask the password on LCD: show '*' instead of real digits ----
       lcd.setCursor(0, 1);
-      lcd.print("Code: ");
-      lcd.print(inputCode);
+      lcd.print("                ");   // clear line 2 first
+      lcd.setCursor(0, 1);
+      lcd.print("Pass: ");
+      for (int i = 0; i < inputCode.length(); i++) {
+        lcd.print('*');               // one star per digit typed
+      }
 
       if (inputCode.length() >= password.length()) {
         checkPassword();
